@@ -11,6 +11,8 @@ const {
   updatePost,
   getAllPosts,
   getPostsByUser,
+  addTagsToPost,
+  createTags,
 } = require("./index");
 
 async function dropTables() {
@@ -18,6 +20,8 @@ async function dropTables() {
     console.log("Starting to drop tables...");
 
     await client.query(`
+      DROP TABLE IF EXISTS post_tags;
+      DROP TABLE IF EXISTS tags;  
       DROP TABLE IF EXISTS posts;
       DROP TABLE IF EXISTS users;
     `);
@@ -48,6 +52,14 @@ async function createTables() {
         title varchar(255) NOT NULL,
         content TEXT NOT NULL,
         active BOOLEAN DEFAULT true
+      );
+      CREATE TABLE tags (
+        id SERIAL PRIMARY KEY,
+        name varchar(255) UNIQUE NOT NULL
+      );
+      CREATE TABLE post_tags (
+        "postId" INTEGER UNIQUE REFERENCES posts(id),
+        "tagId" INTEGER UNIQUE REFERENCES tags(id)
       );
     `);
 
@@ -99,19 +111,19 @@ async function createInitialPosts() {
       title: "First Post",
       content:
         "This is my first post. I hope I love writing blogs as much as I love writing them.",
-      // tags: ["#happy", "#youcandoanything"],
+      tags: ["#happy", "#youcandoanything"],
     });
     await createPost({
       authorId: sandra.id,
       title: "How does this work?",
       content: "Seriously, does this even do anything?",
-      // tags: ["#happy", "#worst-day-ever"],
+      tags: ["#happy", "#worst-day-ever"],
     });
     await createPost({
       authorId: glamgal.id,
       title: "Living the Glam Life",
       content: "Do you even? I swear that half of you are posing.",
-      // tags: ["#happy", "#youcandoanything", "#canmandoeverything"],
+      tags: ["#happy", "#youcandoanything", "#canmandoeverything"],
     });
 
     console.log("Finished creating posts!");
@@ -131,7 +143,6 @@ async function createInitialTags() {
       "#youcandoanything",
       "#catmandoeverything",
     ]);
-    console.log("happy:", happy);
 
     const [postOne, postTwo, postThree] = await getAllPosts();
 
@@ -154,9 +165,9 @@ async function rebuildDB() {
     await createTables();
     await createInitialUsers();
     await createInitialPosts();
-    // await createInitialTags();
+    await createInitialTags();
   } catch (error) {
-    console.log("Error during rebuildDB");
+    // console.log("Error during rebuildDB"); //don't do this error log because it'll override error logs that come in from dropTables, createTables, etc
     throw error;
   }
 }
