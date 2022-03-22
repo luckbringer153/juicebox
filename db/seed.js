@@ -10,9 +10,9 @@ const {
   createPost,
   updatePost,
   getAllPosts,
-  getPostsByUser,
   addTagsToPost,
   createTags,
+  getPostsByTagName,
 } = require("./index");
 
 async function dropTables() {
@@ -58,8 +58,9 @@ async function createTables() {
         name varchar(255) UNIQUE NOT NULL
       );
       CREATE TABLE post_tags (
-        "postId" INTEGER UNIQUE REFERENCES posts(id),
-        "tagId" INTEGER UNIQUE REFERENCES tags(id)
+        "postId" INTEGER REFERENCES posts(id),
+        "tagId" INTEGER REFERENCES tags(id),
+        UNIQUE ("postId","tagId")
       );
     `);
 
@@ -146,9 +147,13 @@ async function createInitialTags() {
 
     const [postOne, postTwo, postThree] = await getAllPosts();
 
+    // console.log("you made it to line 148");
+
     await addTagsToPost(postOne.id, [happy, inspo]);
     await addTagsToPost(postTwo.id, [sad, inspo]);
     await addTagsToPost(postThree.id, [happy, catman, inspo]);
+
+    // console.log("you made it to line 152");
 
     console.log("Finished creating tags!");
   } catch (error) {
@@ -165,7 +170,7 @@ async function rebuildDB() {
     await createTables();
     await createInitialUsers();
     await createInitialPosts();
-    await createInitialTags();
+    // await createInitialTags();
   } catch (error) {
     // console.log("Error during rebuildDB"); //don't do this error log because it'll override error logs that come in from dropTables, createTables, etc
     throw error;
@@ -201,6 +206,16 @@ async function testDB() {
     console.log("Calling getUserById with 1");
     const albert = await getUserById(1);
     console.log("Result:", albert);
+
+    console.log("Calling updatePost on posts[1], only updating tags");
+    const updatePostTagsResult = await updatePost(posts[1].id, {
+      tags: ["#youcandoanything", "#redfish", "#bluefish"],
+    });
+    console.log("Result:", updatePostTagsResult);
+
+    console.log("Calling getPostsByTagName with #happy");
+    const postsWithHappy = await getPostsByTagName("#happy");
+    console.log("Result:", postsWithHappy);
 
     console.log("Finished database tests!");
   } catch (error) {
