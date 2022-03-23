@@ -211,7 +211,8 @@ async function testDB() {
     const updatePostTagsResult = await updatePost(posts[1].id, {
       tags: ["#youcandoanything", "#redfish", "#bluefish"],
     });
-    console.log("Result:", updatePostTagsResult);
+    // console.log("Result:", updatePostTagsResult);
+    console.log("Result:", JSON.stringify({ updatePostTagsResult }, null, 2)); //expands tags so it shows things inside of [Object]'s
 
     console.log("Calling getPostsByTagName with #happy");
     const postsWithHappy = await getPostsByTagName("#happy");

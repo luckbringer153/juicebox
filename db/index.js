@@ -387,12 +387,17 @@ async function getAllTags() {
     SELECT *
     FROM tags;
   `);
+    console.log("tags:", tags);
 
-    return tags;
+    const stringTags = JSON.stringify({ tags }, null, 2);
+    console.log("Stringed Tags:", stringTags);
+
+    return stringTags;
   } catch (error) {
     throw error;
   }
 }
+getAllTags();
 
 module.exports = {
   client,
