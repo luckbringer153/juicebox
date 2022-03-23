@@ -235,82 +235,6 @@ async function getPostsByUser(userId) {
   }
 }
 
-async function createTags(tagList) {
-  if (tagList.length === 0) {
-    return;
-  }
-
-  //need something like: "($1), ($2), ($3)"
-  const insertValues = tagList.map((_, index) => `$${index + 1}`).join("), (");
-  //then use "(${insertValues})" in string template
-
-  // need something like $1, $2, $3
-  const selectValues = tagList.map((_, index) => `$${index + 1}`).join(", ");
-  // then we can use "(${ selectValues })" in our string template
-
-  console.log("insertValues:", insertValues, "and selectValues:", selectValues);
-
-  try {
-    // insert the tags, doing nothing on conflict
-    // returning nothing, we'll query after
-    // select all tags where the name is in our taglist
-    // return the rows from the query
-
-    await client.query(
-      `
-        INSERT INTO tags(name)
-        VALUES (${insertValues})
-        ON CONFLICT (name) DO NOTHING;
-    `,
-      tagList
-    );
-    console.log("after insert");
-
-    const { rows } = await client.query(
-      `
-        SELECT * FROM tags
-        WHERE name
-        IN (${selectValues})
-    `,
-      tagList
-    );
-    console.log("rows:", rows);
-
-    return rows;
-  } catch (error) {
-    throw error;
-  }
-}
-
-async function createPostTag(postId, tagId) {
-  try {
-    await client.query(
-      `
-      INSERT INTO post_tags("postId", "tagId")
-      VALUES ($1, $2)
-      ON CONFLICT ("postId", "tagId") DO NOTHING;
-    `,
-      [postId, tagId]
-    );
-  } catch (error) {
-    throw error;
-  }
-}
-
-async function addTagsToPost(postId, tagList) {
-  try {
-    const createPostTagPromises = tagList.map((tag) => {
-      return createPostTag(postId, tag.id);
-    });
-    // console.log("createPostTagPromises:", createPostTagPromises);
-    await Promise.all(createPostTagPromises);
-
-    return await getPostById(postId);
-  } catch (error) {
-    throw error;
-  }
-}
-
 async function getPostById(postId) {
   try {
     const {
@@ -356,6 +280,86 @@ async function getPostById(postId) {
   }
 }
 
+/**
+ * TAGS Methods
+ */
+
+async function createTags(tagList) {
+  if (tagList.length === 0) {
+    return;
+  }
+
+  //need something like: "($1), ($2), ($3)"
+  const insertValues = tagList.map((_, index) => `$${index + 1}`).join("), (");
+  //then use "(${insertValues})" in string template
+
+  // need something like $1, $2, $3
+  const selectValues = tagList.map((_, index) => `$${index + 1}`).join(", ");
+  // then we can use "(${ selectValues })" in our string template
+
+  // console.log("insertValues:", insertValues, "and selectValues:", selectValues);
+
+  try {
+    // insert the tags, doing nothing on conflict
+    // returning nothing, we'll query after
+    // select all tags where the name is in our taglist
+    // return the rows from the query
+
+    await client.query(
+      `
+        INSERT INTO tags(name)
+        VALUES (${insertValues})
+        ON CONFLICT (name) DO NOTHING;
+    `,
+      tagList
+    );
+    // console.log("after insert");
+
+    const { rows } = await client.query(
+      `
+        SELECT * FROM tags
+        WHERE name
+        IN (${selectValues})
+    `,
+      tagList
+    );
+    // console.log("rows:", rows);
+
+    return rows;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function createPostTag(postId, tagId) {
+  try {
+    await client.query(
+      `
+      INSERT INTO post_tags("postId", "tagId")
+      VALUES ($1, $2)
+      ON CONFLICT ("postId", "tagId") DO NOTHING;
+    `,
+      [postId, tagId]
+    );
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function addTagsToPost(postId, tagList) {
+  try {
+    const createPostTagPromises = tagList.map((tag) => {
+      return createPostTag(postId, tag.id);
+    });
+    // console.log("createPostTagPromises:", createPostTagPromises);
+    await Promise.all(createPostTagPromises);
+
+    return await getPostById(postId);
+  } catch (error) {
+    throw error;
+  }
+}
+
 async function getPostsByTagName(tagName) {
   try {
     const { rows: postIds } = await client.query(
@@ -375,6 +379,21 @@ async function getPostsByTagName(tagName) {
   }
 }
 
+async function getAllTags() {
+  //currently returns "{}" with options for raw and parsed on the right-hand side of the page. Is this because my tags are appearing as [Object]'s for some reason?? May need to do same template as getAllPosts() and/or getAllUsers()
+
+  try {
+    const { tags } = await client.query(`
+    SELECT *
+    FROM tags;
+  `);
+
+    return tags;
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   client,
   createUser,
@@ -387,4 +406,5 @@ module.exports = {
   addTagsToPost,
   createTags,
   getPostsByTagName,
+  getAllTags,
 };
