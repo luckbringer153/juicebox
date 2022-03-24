@@ -92,6 +92,23 @@ async function getUserById(userId) {
   }
 }
 
+async function getUserByUsername(username) {
+  try {
+    const {
+      rows: [user],
+    } = await client.query(
+      `
+    SELECT * FROM users WHERE username=$1;
+    `,
+      [username]
+    );
+
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
+
 /**
  * POST Methods
  */
@@ -387,10 +404,10 @@ async function getAllTags() {
     SELECT *
     FROM tags;
   `);
-    console.log("tags:", tags);
+    // console.log("tags:", tags);
 
     const stringTags = JSON.stringify({ tags }, null, 2);
-    console.log("Stringed Tags:", stringTags);
+    // console.log("Stringed Tags:", stringTags);
 
     return tags;
   } catch (error) {
@@ -412,4 +429,5 @@ module.exports = {
   createTags,
   getPostsByTagName,
   getAllTags,
+  getUserByUsername,
 };
