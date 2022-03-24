@@ -205,7 +205,9 @@ async function testDB() {
 
     console.log("Calling getUserById with 1");
     const albert = await getUserById(1);
-    console.log("Result:", albert);
+    // console.log("Result:", albert);
+    console.log("ALBERT");
+    console.dir(albert, { depth: null }); //console.dir allows you to see whole object with nested objects (you'd need to stringify it for console.log to show you nested objects)
 
     console.log("Calling updatePost on posts[1], only updating tags");
     const updatePostTagsResult = await updatePost(posts[1].id, {

@@ -383,7 +383,7 @@ async function getAllTags() {
   //currently returns "{}" with options for raw and parsed on the right-hand side of the page. Is this because my tags are appearing as [Object]'s for some reason?? May need to do same template as getAllPosts() and/or getAllUsers()
 
   try {
-    const { tags } = await client.query(`
+    const { rows: tags } = await client.query(`
     SELECT *
     FROM tags;
   `);
@@ -392,7 +392,7 @@ async function getAllTags() {
     const stringTags = JSON.stringify({ tags }, null, 2);
     console.log("Stringed Tags:", stringTags);
 
-    return stringTags;
+    return tags;
   } catch (error) {
     throw error;
   }
