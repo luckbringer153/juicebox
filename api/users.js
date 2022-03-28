@@ -1,9 +1,14 @@
 const express = require("express");
 const usersRouter = express.Router();
-const { getAllUsers } = require("../db");
-const { getUserByUsername } = require("../db");
+const {
+  getAllUsers,
+  getUserByUsername,
+  createUser,
+  getUserById,
+  updateUser,
+} = require("../db");
 const jwt = require("jsonwebtoken");
-const { createUser } = require("../db");
+const { requireUser } = require("./utils");
 
 usersRouter.use((req, res, next) => {
   console.log("A request is being made to /users");
@@ -13,10 +18,18 @@ usersRouter.use((req, res, next) => {
   next();
 });
 
-usersRouter.get("/", async (req, res) => {
-  const users = await getAllUsers();
+usersRouter.get("/", async (req, res, next) => {
+  try {
+    const allUsers = await getAllUsers();
 
-  res.send({ users });
+    const users = allUsers.filter((user) => {
+      return user.active || (req.user && user.author.id === req.user.id);
+    });
+
+    res.send({ users });
+  } catch ({ name, message }) {
+    next({ name, message });
+  }
 });
 
 usersRouter.post("/login", async (req, res, next) => {
@@ -87,6 +100,36 @@ usersRouter.post("/register", async (req, res, next) => {
       message: "thank you for signing up",
       token,
     });
+  } catch ({ name, message }) {
+    next({ name, message });
+  }
+});
+
+usersRouter.delete("/:userId", requireUser, async (req, res, next) => {
+  try {
+    const user = await getUserById(req.params.userId);
+
+    console.log(user);
+    console.log("req.user.id:", req.user.id);
+
+    if (user && user.id === req.user.id) {
+      console.log("user", user);
+      const updatedUser = await updateUser(user.id, { active: false });
+
+      res.send({ post: updatedUser });
+    } else {
+      next(
+        post
+          ? {
+              name: "UnauthorizedUserError",
+              message: "You cannot delete a user which is not yours",
+            }
+          : {
+              name: "UserNotFoundError",
+              message: "That user does not exist",
+            }
+      );
+    }
   } catch ({ name, message }) {
     next({ name, message });
   }
